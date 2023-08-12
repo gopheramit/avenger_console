@@ -5,21 +5,6 @@ import (
 	"strings"
 )
 
-type Avenger struct {
-	Name       string
-	PersonName string
-	Assigned   int
-	Completed  int
-	Abilities  string
-}
-
-type Mission struct {
-	Team           []string
-	MissionName    string
-	MissionStatus  string
-	MissionDetails string
-}
-
 func PrintConsole() {
 	fmt.Println("------------------shield---------------")
 	fmt.Println("Welcome to captain fury")
@@ -30,123 +15,29 @@ func PrintConsole() {
 	fmt.Println("5.Update mission status")
 	fmt.Println("6.List avengers")
 }
-func checkMissions(missions []Mission) {
-	for _, v := range missions {
-		fmt.Println(v)
-	}
+
+type Avenger struct {
+	Name       string
+	PersonName string
+	Assigned   int
+	Completed  int
+	Abilities  string
+	Missions   []Mission
 }
 
-func printAvengerDetails(avengers []Avenger, name string) {
-	for _, v := range avengers {
-		if name == v.Name {
-			fmt.Println(v)
-			return
-		}
-	}
-	fmt.Println("avenger does not exist")
-	return
+type Mission struct {
+	Name    string
+	Status  string
+	Details string
 }
 
-func printMissionDetails(missions []Mission, name string) {
-	for _, v := range missions {
-		if name == v.MissionName {
-			fmt.Println(v)
-			return
-		}
-	}
-	fmt.Println("mission not found")
-	return
-
+type Manger struct {
+	avengers []Avenger
+	missions []Mission
 }
 
-func updateMissionStatus(missions []Mission, name, status string) []Mission {
-	for _, v := range missions {
-		if v.MissionDetails == name {
-			v.MissionStatus = status
-		}
-	}
-	return missions
-}
-
-func getMissionDetails(mission []Mission, name string) (Mission, int) {
-	for _, mi := range mission {
-		if mi.MissionName == name {
-			return mi, 1
-		}
-	}
-	return mission[0], 0
-}
-func getStatus(avengers []Avenger, name string) string {
-	var a int
-	for i, _ := range avengers {
-		if avengers[i].Name == name {
-			a = avengers[i].Assigned
-		}
-		if a == 0 {
-			return "Available"
-		} else {
-			return "On Mission"
-		}
-
-	}
-	return ""
-}
-func getMission(mission []Mission, name string) []string {
-	task := []string{}
-	for i, _ := range mission {
-		for j, _ := range mission[i].Team {
-			if mission[i].Team[j] == name {
-				task = append(task, mission[i].MissionName)
-			}
-		}
-	}
-	return task
-}
-func listAvengers(avengers []Avenger, mission []Mission) {
-	fmt.Println("Avenger Name | Status | Assigned Mission")
-	var status1 string
-	for i, _ := range avengers {
-		status1 = getStatus(avengers, avengers[i].Name)
-		task := getMission(mission, avengers[i].Name)
-		if len(task) == 0 {
-			fmt.Println(avengers[i].Name, status1)
-
-		} else {
-			fmt.Println(avengers[i].Name, status1, task)
-		}
-	}
-}
-
-func checkCount(avenger []Avenger, name string) (int, int) {
-	for i, _ := range avenger {
-		if avenger[i].Name == name {
-			return avenger[i].Assigned, 1
-		}
-	}
-	return 999, 999
-}
-
-func updateCount(avengers []Avenger, name string) []Avenger {
-	for i, _ := range avengers {
-		if avengers[i].Name == name {
-			avengers[i].Assigned += 1
-		}
-	}
-	return avengers
-
-}
-func assignMission(mission []Mission, team []string, name, details string) []Mission {
-	newMission := &Mission{
-		Team:           team,
-		MissionName:    name,
-		MissionStatus:  "Assigned",
-		MissionDetails: details,
-	}
-	mission = append(mission, *newMission)
-	return mission
-}
 func main() {
-	var avengers = []Avenger{
+	var avengersData = []Avenger{
 		Avenger{
 			Name:       "Iron Man",
 			PersonName: "Tony Stark",
@@ -190,7 +81,11 @@ func main() {
 			Abilities:  "Guy who can aim very well and see evrything",
 		},
 	}
-	var missions = []Mission{}
+	manger := Manger{
+		avengers: avengersData,
+		missions: []Mission{},
+	}
+	//var missions = []Mission{}
 	for {
 		PrintConsole()
 		var choice int
@@ -202,38 +97,35 @@ func main() {
 		switch choice {
 		case 1:
 			fmt.Println("check the missions")
-			if len(missions) == 0 {
+			if len(manger.missions) == 0 {
 				fmt.Println("No missions are assigned as of now")
 			} else {
-				checkMissions(missions)
+				manger.GetMissions()
+
 			}
 
 		case 2:
 			fmt.Println("Assign mission to avengers")
-			var name string
-			flag1 := true
-			var details string
-			fmt.Println("Enter Avengers")
-			fmt.Scan(&name)
-			team := strings.Split(name, ",")
-			for i, _ := range team {
-				cnt, _ := checkCount(avengers, team[i])
-				if cnt >= 2 {
-					fmt.Println("alredy workingon two mission ", team[i])
-					flag1 = false
-				} else {
-					avengers = updateCount(avengers, team[i])
-				}
-
+			var names string
+			var missionDetails string
+			var missionName string
+			fmt.Println("Enter avengers names")
+			fmt.Scan(&names)
+			avengerNames := strings.Split(names, ",")
+			fmt.Println("Enter missionDetails")
+			fmt.Scan(&missionDetails)
+			fmt.Println("Enter missionName")
+			fmt.Scan(&missionName)
+			mission := &Mission{
+				Name:    missionName,
+				Details: missionDetails,
 			}
-			if flag1 == true {
-				fmt.Println("enter mission name")
-				fmt.Scan(&name)
-				fmt.Println("Enter the mission details")
-				fmt.Scan(&details)
-				missions = assignMission(missions, team, name, details)
-				fmt.Println("Mission has been assigened")
-				fmt.Println("notificatin sent")
+			for _, name := range avengerNames {
+				//avenger here is pointer
+				avenger := manger.findAvengerByName(name)
+				if avenger != nil {
+					manger.AddMission(mission, avenger)
+				}
 			}
 
 		case 3:
@@ -245,7 +137,12 @@ func main() {
 				fmt.Println("enter valid mission name")
 				return
 			}
-			printMissionDetails(missions, name)
+			mission := manger.FindMissionByName(name)
+			if mission != nil {
+				fmt.Println(mission)
+			} else {
+				fmt.Println("Mission not found")
+			}
 
 		case 4:
 			fmt.Println("check avengers details")
@@ -255,7 +152,12 @@ func main() {
 			if err != nil {
 				fmt.Println("inter the valid name")
 			} else {
-				printAvengerDetails(avengers, name)
+				avenger := manger.findAvengerByName(name)
+				if avenger != nil {
+					fmt.Println(avenger)
+				} else {
+					fmt.Println("Avenger deatils not found")
+				}
 			}
 
 		case 5:
@@ -266,12 +168,18 @@ func main() {
 			fmt.Scan(&name)
 			fmt.Println("Enter the missin status")
 			fmt.Scan(&status)
-			mission := updateMissionStatus(missions, name, status)
-			team, _ := getMissionDetails(mission, name)
-			fmt.Println("Email and sms sent to team ", team.Team)
+			manger.UpdateMissionStatus(name, status)
+			// mission := manger.FindMissionByName(name)
+			// if mission != nil {
+			// 	mission.Status = status
+			// }
+			// mission := updateMissionStatus(missions, name, status)
+			// team, _ := getMissionDetails(mission, name)
+			// fmt.Println("Email and sms sent to team ", team.Team)
 		case 6:
 			fmt.Println("list avengers")
-			listAvengers(avengers, missions)
+			manger.ListAvengers()
+			// listAvengers(avengers, missions)
 		}
 	}
 
